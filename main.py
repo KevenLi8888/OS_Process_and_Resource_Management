@@ -8,9 +8,6 @@ from automic_counter import AtomicCounter
 
 class Queue:
 
-    # 未实现？
-    # private static final Queue readyQueue = new Queue();// 单例设计模式-饿汉式
-
     def __init__(self):
         self.deques = [deque([]) for _ in range(3)]
 
@@ -37,6 +34,7 @@ class Queue:
 
 class PCB:
     ready_queue = Queue().get_ready_queue()
+    # 整个程序只能实例化一个ready_queue，就是PCB中的ready_queue，其他地方都使用pcb.ready_queue来访问，否则会出大问题
 
     def __init__(self):
         self.exist_process = {}
@@ -67,10 +65,15 @@ class PCB:
         if current_process:
             current_process.get_children().append(process)
             process.set_parent(current_process)
+            pcb.add_exist_list(process)
+            self.ready_queue.add_process(process)
         else: # 系统初始化时没有current_process，需要设置
             self.current_process = process
-        pcb.add_exist_list(process)
-        self.ready_queue.add_process(process)
+            pcb.add_exist_list(process)
+        # 将以下两行代码放到上面的if-else结构中，因为系统初始化时init进程无需放到ready_queue里，
+        # 直接通过scheduler调度进入running态。否则会导致ready_queue的deques[0]里有两个init进程。
+        # pcb.add_exist_list(process)
+        # self.ready_queue.add_process(process)
         process.set_state('ready')
         pcb.scheduler()
         return process
@@ -154,7 +157,8 @@ class PCB:
 class Process:
     state = Enum('state', ('new', 'ready', 'running', 'blocked', 'terminated'))
     pcb = PCB().get_PCB()
-    ready_queue = Queue().get_ready_queue()
+    # ready_queue = Queue().get_ready_queue() # 不能重新实例化ready_queue，应直接用pcb.ready_queue访问
+    ready_queue = pcb.ready_queue
     block_resource = None
 
     def __init__(self, PID, process_name, priority, state, resource_map: dict, parent_process, children_process):
@@ -204,6 +208,7 @@ class Process:
         for child in self.children_process:
             if child == self:
                 self.children_process.remove(child)
+                # self.children_process.remove_child()
 
     def kill_sub_tree(self):
         if(self.children_process): # 当前进程子树不为空
@@ -223,7 +228,7 @@ class Process:
             block_resource.remove_block_process(self)
             pcb.kill_process(self)
             self.set_state('terminated')
-        elif self.set_state() == 'running':
+        elif self.get_state() == 'running':
             pcb.kill_process(self)
             self.set_state('terminated')
 
@@ -238,7 +243,8 @@ class Process:
 
 class Resource:
     pcb = PCB().get_PCB()
-    ready_queue = Queue().get_ready_queue()
+    # ready_queue = Queue().get_ready_queue()
+    ready_queue = pcb.ready_queue
 
     class BlockProcess:
         def __init__(self, process, need):
@@ -331,23 +337,23 @@ class Resource:
                     break
 
     def print_current_status(self):
-        # TODO: join方法不可用，需要更改实现方式
+
         string = 'res-'
-        string.join(self.RID)
-        string.join('{max=')
-        string.join(self.max)
-        string.join(',remaining:')
-        string.join(self.remaining)
-        string.join(', block_deque[')
+        string += str(self.RID)
+        string += '{max='
+        string += str(self.max)
+        string += ',remaining:'
+        string += str(self.remaining)
+        string += ', block_deque['
 
         for blocked_process in self.block_deque:
-            string.join(',{')
-            string.join(blocked_process.get_process().get_process_name())
-            string.join(':')
-            string.join(blocked_process.get_need())
-            string.join('}')
+            string += ',{'
+            string += blocked_process.get_process().get_process_name()
+            string += ':'
+            string += blocked_process.get_need()
+            string += '}'
 
-        string.join(']}')
+        string += ']}'
 
         print(string)
 
@@ -449,18 +455,22 @@ def exec_commands(cmds):
     elif (cmds[0] == 'list') & (cmds[1] == 'ready'):
         # TODO: list ready
         print('list ready is under development')
+        # queue = PCB().ready_queue
+        # for i in queue:
+
+        # print(queue)
+
 
     elif (cmds[0] == 'list') & (cmds[1] == 'block'):
         # TODO: list block
         print('list block is under development')
 
     elif (cmds[0] == 'list') & (cmds[1] == 'res'):
-        # TODO: list resource
-        print('list resource is under development')
-        # R1.print_current_status()
-        # R2.print_current_status()
-        # R3.print_current_status()
-        # R4.print_current_status()
+        print()
+        R1.print_current_status()
+        R2.print_current_status()
+        R3.print_current_status()
+        R4.print_current_status()
 
     else:
         print('错误！请输入合法的命令！')
