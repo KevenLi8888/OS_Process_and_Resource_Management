@@ -160,7 +160,7 @@ class Process:
     pcb = PCB().get_PCB()
     # ready_queue = Queue().get_ready_queue() # 不能重新实例化ready_queue，应直接用pcb.ready_queue访问
     ready_queue = pcb.ready_queue
-    block_resource = None
+    block_resource = []
 
     def __init__(self, PID, process_name, priority, state, resource_map: dict, parent_process, children_process):
         self.PID = PID
@@ -307,20 +307,19 @@ class Resource:
         while self.block_deque:
             block_process = self.block_deque[0]
             need = block_process.get_need()
-            if self.remaining > need:
+            if self.remaining >= need:
                 ready_process = block_process.get_process()
                 self.request(ready_process, need)
                 self.block_deque.popleft()
                 self.ready_queue.add_process(ready_process)
                 ready_process.set_state('ready')
-                ready_process.set_block_resource(None)
+                ready_process.set_block_resource([])
                 if ready_process.get_priority() > pcb.get_current_process().get_priority():
                     pcb.preempt(ready_process, pcb.get_current_process())
-                else:
-                    break
+                # else:
+                #     break
             else:
                 break
-        return
 
     def release(self, process, num):
         if num == 0:
@@ -329,17 +328,17 @@ class Resource:
         while self.block_deque:
             block_process = self.block_deque[0]
             need = block_process.get_need()
-            if self.remaining > need:
+            if self.remaining >= need: # 大于等于 不是大于
                 ready_process = block_process.get_process()
                 self.request(ready_process, need)
                 self.block_deque.popleft()
                 self.ready_queue.add_process(ready_process)
                 ready_process.set_state('ready')
-                ready_process.set_block_resource(None)
+                ready_process.set_block_resource([])
                 if ready_process.get_priority() > pcb.get_current_process().get_priority():
                     pcb.preempt(ready_process, pcb.get_current_process())
-                else:
-                    break
+                # else:
+                #     break
             else:
                 break
         return
@@ -506,7 +505,7 @@ def exec_commands(cmds):
         return -1
 
     if not pcb.get_current_process() == None:
-        print(pcb.get_current_process().get_process_name())
+        print(pcb.get_current_process().get_process_name(), end=' ')
         return 0
 
 if __name__ == '__main__':
