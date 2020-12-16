@@ -30,7 +30,8 @@ class Queue:
     def remove_process(self, process):
         priority = process.get_priority()
         deque = self.deques[priority]
-        return deque.remove(process)
+        deque.remove(process)
+        return
 
 class PCB:
     ready_queue = Queue().get_ready_queue()
@@ -204,14 +205,13 @@ class Process:
         self.kill_sub_tree()
         pcb.scheduler()
 
-    def remove_child(self):
-        for child in self.children_process:
+    def remove_child(self, parent):
+        for child in parent.children_process:
             if child == self:
-                self.children_process.remove(child)
-                # self.children_process.remove_child()
+                parent.children_process.remove(child)
 
     def kill_sub_tree(self):
-        if(self.children_process): # 当前进程子树不为空
+        if self.children_process: # 当前进程子树不为空
             child_count = len(self.children_process)
             for i in range(child_count):
                 child = self.children_process[0]
@@ -232,8 +232,10 @@ class Process:
             pcb.kill_process(self)
             self.set_state('terminated')
 
-        self.parent_process.remove_child()
-        self.parent_process = None
+        # self.parent_process.remove_child() # 这样会使该父进程的所有子进程都被删掉而不是只删想要的子进程 # 不应该传入self！self为父进程。应该
+        parent = self.parent_process
+        self.remove_child(parent)
+        self.parent_process = []
 
         duplicate_resource_map = self.resource_map.copy() # prevent: RuntimeError: dictionary changed size during iteration
         for resource in duplicate_resource_map:
@@ -316,6 +318,9 @@ class Resource:
                     pcb.preempt(ready_process, pcb.get_current_process())
                 else:
                     break
+            else:
+                break
+        return
 
     def release(self, process, num):
         if num == 0:
@@ -335,6 +340,9 @@ class Resource:
                     pcb.preempt(ready_process, pcb.get_current_process())
                 else:
                     break
+            else:
+                break
+        return
 
     def print_current_status(self):
 
@@ -344,21 +352,26 @@ class Resource:
         string += str(self.max)
         string += ',remaining:'
         string += str(self.remaining)
-        string += ', block_deque['
+        string += '}'
+        print(string)
+
+    def print_block_deque(self):
+
+        string = 'res-'
+        string += str(self.RID)
+        string += ' block_deque '
 
         for blocked_process in self.block_deque:
-            string += ',{'
+            string += '{'
             string += blocked_process.get_process().get_process_name()
             string += ':'
-            string += blocked_process.get_need()
+            string += str(blocked_process.get_need())
             string += '}'
-
-        string += ']}'
 
         print(string)
 
-def load_file():
-    file = open('0.txt', 'r')
+def load_file(filename):
+    file = open(filename, 'r')
     commands = file.readlines()
     for line in commands:
         commands[commands.index(line)] = line.strip()
@@ -453,30 +466,47 @@ def exec_commands(cmds):
         pcb.timeout()
 
     elif (cmds[0] == 'list') & (cmds[1] == 'ready'):
-        # TODO: list ready
-        print('list ready is under development')
-        # queue = PCB().ready_queue
-        # for i in queue:
-
-        # print(queue)
-
+        print()
+        print('...ready list...')
+        queue = pcb.ready_queue
+        for priority in range(3):
+            print(str(priority) + ':', end=' ')
+            for process in queue.deques[priority]:
+                process_name = process.get_process_name()
+                print(' ' + process_name, end=' ')
+            print()
+        print('...ready list ends...')
+        print()
+        return 0
 
     elif (cmds[0] == 'list') & (cmds[1] == 'block'):
-        # TODO: list block
-        print('list block is under development')
+        print()
+        print('...block list...')
+        R1.print_block_deque()
+        R2.print_block_deque()
+        R3.print_block_deque()
+        R4.print_block_deque()
+        print('...block list ends...')
+        print()
+        return 0
 
     elif (cmds[0] == 'list') & (cmds[1] == 'res'):
         print()
+        print('...resource list...')
         R1.print_current_status()
         R2.print_current_status()
         R3.print_current_status()
         R4.print_current_status()
+        print('...resource list ends...')
+        print()
+        return 0
 
     else:
         print('错误！请输入合法的命令！')
+        return -1
 
     if not pcb.get_current_process() == None:
-        print(pcb.get_current_process().get_process_name(), end=' ')
+        print(pcb.get_current_process().get_process_name())
         return 0
 
 if __name__ == '__main__':
@@ -489,8 +519,9 @@ if __name__ == '__main__':
     pcb.create_process('init', 0)
     print('init' + ' ')
 
-    print('从文件读取数据...')
-    commands = load_file()
+    # print('从文件读取数据...')
+    filename = '2.txt'
+    commands = load_file(filename)
 
     for command in commands:
         cmds = command.split(' ')
