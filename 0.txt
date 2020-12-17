@@ -10,7 +10,6 @@ to
 req R3 3
 to
 req R4 3
-pr q
 list res
 to
 to
@@ -22,3 +21,4 @@ to
 de q
 to
 to
+pr p
