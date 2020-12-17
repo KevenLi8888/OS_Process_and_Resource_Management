@@ -2,6 +2,7 @@ cr x 1
 cr p 1
 cr q 1
 cr r 1
+pr x
 list ready
 to
 req R2 1
@@ -9,6 +10,7 @@ to
 req R3 3
 to
 req R4 3
+pr q
 list res
 to
 to

@@ -243,6 +243,34 @@ class Process:
 
         return
 
+    def print_process_info(self):
+        print()
+        print('...process info...')
+        print('process id: ' + str(self.PID))
+        print('process name: ' + self.process_name)
+        print('process priority: ' + str(self.priority))
+        print('process state: ' + self.state)
+
+        parent_process_name = self.parent_process.process_name
+        print('parent process: ' + parent_process_name)
+
+        children_process_name_list = []
+        for child in self.children_process:
+            children_process_name_list.append(child.process_name)
+        print('children process: ' + str(children_process_name_list))
+
+        process_resource_name_list = list(self.resource_map.keys())
+        process_resource_count_list = list(self.resource_map.values())
+        process_resource_info = {}
+        for i in range(len(self.resource_map)):
+            resource_name = 'R' + str(process_resource_name_list[i].RID)
+            resource_count = process_resource_count_list[i]
+            process_resource_info[resource_name] = resource_count
+        print('process resource: ' + str(process_resource_info))
+        print('...process info ends...')
+        print()
+        return
+
 class Resource:
     pcb = PCB().get_PCB()
     # ready_queue = Queue().get_ready_queue()
@@ -500,12 +528,25 @@ def exec_commands(cmds):
         print()
         return 0
 
+    elif (cmds[0] == 'pr'):
+        if not len(cmds) == 2:
+            print('错误！输入命令格式不合法！')
+            return -1
+        else:
+            process_name = cmds[1]
+            process = pcb.find_process(process_name)
+            if process == None:
+                print('错误！没有名为' + process_name + '的进程！')
+                return -1
+            else:
+                process.print_process_info()
+
     else:
         print('错误！请输入合法的命令！')
         return -1
 
     if not pcb.get_current_process() == None:
-        print(pcb.get_current_process().get_process_name(), end=' ')
+        print('running: ' + pcb.get_current_process().get_process_name())
         return 0
 
 if __name__ == '__main__':
@@ -519,7 +560,7 @@ if __name__ == '__main__':
     print('init' + ' ')
 
     # print('从文件读取数据...')
-    filename = '2.txt'
+    filename = '0.txt'
     commands = load_file(filename)
 
     for command in commands:
