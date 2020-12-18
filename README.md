@@ -11,7 +11,7 @@ Fall 2020 Operating System Lab project 1
 
 ## 运行指引
 
-将指令放在` 0.txt`中，运行` main.py `即可。
+将指令放在` 0.txt `中，运行` main.py `即可。
 
 ## 更多测试用例
 
