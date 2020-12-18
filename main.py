@@ -242,8 +242,7 @@ class Process:
         # 释放资源
         duplicate_resource_map = self.resource_map.copy() # prevent: RuntimeError: dictionary changed size during iteration
         for resource in duplicate_resource_map:
-            resource.release_process(self)
-
+            resource.release_all(self)
         return
 
     def print_process_info(self):
@@ -339,7 +338,8 @@ class Resource:
             else:
                 resource_map[self] = need
 
-    def release_process(self, process):
+    def release_all(self, process):
+        # 释放当前持有的所有资源
         # 进程释放资源并唤醒阻塞进程
         num = process.get_resource_map().pop(self)
         if num == 0:
@@ -363,6 +363,7 @@ class Resource:
                 break
 
     def release(self, process, num):
+        # 释放指定数量的资源
         # 进程释放资源并唤醒阻塞进程
         if num == 0:
             return
@@ -554,6 +555,7 @@ def exec_commands(cmds):
                 return -1
             else:
                 process.print_process_info()
+                return 0
 
     else:
         print('错误！请输入合法的命令！')
